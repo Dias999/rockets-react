@@ -38,6 +38,7 @@ const TextField: FC<TextFieldProps & Props> = (props) => {
     options,
     containerProps,
     labelProps,
+    name,
   } = props;
 
   const [showPassword, setShowPassword] = useState(false);
@@ -59,9 +60,11 @@ const TextField: FC<TextFieldProps & Props> = (props) => {
   return (
     <Box {...containerProps}>
       {!ishiddenLabel && label && (
-        <Text textAlign="left" {...TEXT_INITIAL_PROPS} {...labelProps}>
-          {`${label}${required ? ' *' : ''}`}
-        </Text>
+        <label htmlFor={name}>
+          <Text textAlign="left" {...TEXT_INITIAL_PROPS} {...labelProps}>
+            {`${label}${required ? ' *' : ''}`}
+          </Text>
+        </label>
       )}
 
       <MuiTextField
