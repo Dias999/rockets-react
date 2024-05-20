@@ -1,0 +1,62 @@
+# Installation
+
+System requirements:
+
+- Node.js 16 or later.
+
+---
+
+### Installation
+
+```js filename="yarn" copy
+yarn add @concepta/...
+```
+
+```js filename="npm" copy
+npm install @concepta/...
+```
+
+Add theme provider.
+
+```js copy
+import { ThemeProvider } from '@concepta/react-material-ui/dist/styles';
+import { themeLight } from '@/styles/theme';
+import App from './App';
+
+const Root = () => {
+  return (
+    <ThemeProvider theme={themeLight}>
+      <App />
+    </ThemeProvider>
+  );
+};
+
+export default Root;
+```
+
+If you are using the `react-data-provider`, you will need to wrap your app with the data provider.
+
+```js copy {2,7,9-11,15,17}
+import { ThemeProvider } from '@concepta/react-material-ui/dist/styles';
+import { ClientProvider } from '@concepta/react-data-provider';
+import { themeLight } from '@/styles/theme';
+import App from './App';
+
+const Root = () => {
+  const [tokenIsExpired, setTokenIsExpired] = useState(false);
+
+  const onRefreshTokenError = () => {
+    setTokenIsExpired(true);
+  };
+
+  return (
+    <ThemeProvider theme={themeLight}>
+      <ClientProvider onRefreshTokenError={onRefreshTokenError}>
+        <App />
+      </ClientProvider>
+    </ThemeProvider>
+  );
+};
+
+export default Root;
+```
