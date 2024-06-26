@@ -1,6 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { http, HttpResponse } from 'msw';
+import { RJSFSchema } from '@rjsf/utils';
 // import { fn } from '@storybook/test';
 import CrudModule from './index';
+import {
+  mockRequestDataGen,
+  MockRequestDataGenParams,
+} from './mockRequestDataGen';
 
 const meta = {
   title: 'Example/CrudModule',
@@ -12,20 +18,16 @@ const meta = {
     },
   },
   tags: ['autodocs'],
-  // More on argTypes: https://storybook.js.org/docs/api/argtypes
-  // argTypes: {
-  //   backgroundColor: { control: 'color' },
-  // },
-  // Use `fn` to spy on the onClick arg, which will appear in the actions panel once invoked: https://storybook.js.org/docs/essentials/actions#action-args
-  // args: { onClick: fn() },
-} satisfies Meta<typeof CrudModule>;
-
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Primary: Story = {
+  argTypes: {
+    hideDeleteButton: { control: 'boolean' },
+    formContainerVariation: {
+      control: {
+        type: 'radio',
+        options: ['drawer', 'modal'],
+      },
+    },
+  },
   args: {
-    title: 'Users',
     resource: 'user',
     tableProps: {
       tableSchema: [
@@ -46,50 +48,98 @@ export const Primary: Story = {
           label: 'Age',
         },
       ],
-      // filters: [
-      //   {
-      //     id: 'name',
-      //     label: 'Search',
-      //     operator: 'contL',
-      //     type: 'text',
-      //     columns: 4,
-      //   },
-      //   {
-      //     id: 'school',
-      //     label: 'Full Name',
-      //     operator: 'contL',
-      //     type: 'text',
-      //     columns: 4,
-      //   },
-      //   {
-      //     id: 'userType',
-      //     label: 'Select',
-      //     operator: 'eq',
-      //     type: 'select',
-      //     columns: 4,
-      //     options: [
-      //       {
-      //         label: 'School Staff',
-      //         value: 'SCHOOL_STAFF',
-      //       },
-      //       {
-      //         label: 'Student',
-      //         value: 'STUDENT',
-      //       },
-      //       {
-      //         label: 'Parent',
-      //         value: 'PARENT',
-      //       },
-      //     ],
-      //   },
-      // ],
+      filters: [
+        {
+          id: 'name',
+          label: 'Search',
+          operator: 'contL',
+          type: 'text',
+          columns: 4,
+        },
+        {
+          id: 'age',
+          label: 'Select',
+          operator: 'eq',
+          type: 'select',
+          columns: 4,
+          options: [
+            {
+              label: '24',
+              value: '24',
+            },
+            {
+              label: '25',
+              value: '25',
+            },
+            {
+              label: '26',
+              value: '26',
+            },
+          ],
+        },
+      ],
     },
-    hideDeleteButton: true,
-    // createFormProps={{
-    //   formSchema: commonSchema,
-    // }}
-    // detailsFormProps={{
-    //   formSchema: commonSchema,
-    // }}
+  },
+} satisfies Meta<typeof CrudModule>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+const commonSchema: RJSFSchema = {
+  type: 'object',
+  title: 'User Details',
+  properties: {
+    name: { type: 'string', title: 'Name' },
+    age: { type: 'string', title: 'Age' },
+    email: { type: 'string', title: 'Email' },
+  },
+};
+
+export const MockedError: Story = {
+  args: {
+    resource: 'wrong-path',
+    title: 'Users',
+    hideDeleteButton: false,
+    formContainerVariation: 'drawer',
+    createFormProps: {
+      formSchema: commonSchema,
+    },
+    detailsFormProps: {
+      formSchema: commonSchema,
+    },
+  },
+};
+
+export const MockedSuccess: Story = {
+  parameters: {
+    msw: {
+      handlers: [
+        http.get('http://localhost:6006/user', ({ request }) => {
+          const url = new URL(request.url);
+          const limit = url.searchParams.get('limit');
+          const page = url.searchParams.get('page');
+          const sort = url.searchParams.get('sort');
+
+          return HttpResponse.json(
+            mockRequestDataGen({
+              limit,
+              page,
+              sort: sort as MockRequestDataGenParams['sort'],
+            }),
+          );
+        }),
+      ],
+    },
+  },
+  args: {
+    title: 'Users',
+    hideDeleteButton: false,
+    formContainerVariation: 'drawer',
+    createFormProps: {
+      formSchema: commonSchema,
+    },
+    detailsFormProps: {
+      formSchema: commonSchema,
+    },
   },
 };

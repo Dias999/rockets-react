@@ -58,6 +58,8 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.3",
     "eslint-plugin-storybook": "^0.8.0",
+    "msw": "^2.3.1",
+    "msw-storybook-addon": "^2.0.2",
     "storybook": "^8.1.6",
     "typescript": "^5"
   },
@@ -70,5 +72,10 @@
     "transform": {
       "^.+\\.(ts|tsx|js|jsx)$": "ts-jest"
     }
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }
