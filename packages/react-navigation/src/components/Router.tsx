@@ -1,16 +1,9 @@
-import React, {
-  Children,
-  ComponentType,
-  PropsWithChildren,
-  ReactElement,
-  ReactNode,
-} from 'react';
+import React, { Children, ReactElement, ReactNode } from 'react';
 import {
   createMemoryRouter,
   createBrowserRouter,
-  createRoutesFromElements,
   RouterProvider,
-  Route,
+  Navigate,
 } from 'react-router-dom';
 import {
   DrawerItemProps,
@@ -18,7 +11,12 @@ import {
   DrawerProps,
   NavbarProps,
 } from '@concepta/react-material-ui/';
-import RoutesRoot from './RoutesRoot';
+
+import LoginRoute from './LoginRoute';
+import DefaultRoute from './DefaultRoute';
+import SignUpRoute from './SignUpRoute';
+import ResetPasswordRoute from './ResetPasswordRoute';
+import ForgotPasswordRoute from './ForgotPasswordRoute';
 
 export type AuthModule = {
   signIn?: AuthModuleProps;
@@ -27,59 +25,8 @@ export type AuthModule = {
   resetPassword?: AuthModuleProps;
 };
 
-const router = (
-  AdminProvider: ComponentType<PropsWithChildren<{ home: string }>>,
-  routes: ReactElement[],
-  items: DrawerItemProps[],
-  defaultRoute?: string,
-  authModuleProps?: AuthModule,
-  drawerProps?: DrawerProps,
-  navbarProps?: NavbarProps,
-  useMemoryRouter?: boolean,
-  renderAppBar?: (
-    menuItems: DrawerItemProps[],
-    children: ReactNode,
-  ) => ReactNode,
-  renderSignIn?: (home: string) => ReactNode,
-  renderSignUp?: (home: string) => ReactNode,
-  renderForgotPassword?: (home: string) => ReactNode,
-  renderResetPassword?: (home: string) => ReactNode,
-) => {
-  const firstRoute = routes[0];
-
-  const createRouter = useMemoryRouter
-    ? createMemoryRouter
-    : createBrowserRouter;
-
-  return createRouter(
-    createRoutesFromElements(
-      <Route
-        path="/*"
-        element={
-          <AdminProvider home={defaultRoute ?? firstRoute?.props.id}>
-            <RoutesRoot
-              routes={routes}
-              items={items}
-              defaultRoute={defaultRoute}
-              authModuleProps={authModuleProps}
-              drawerProps={drawerProps}
-              navbarProps={navbarProps}
-              renderAppBar={renderAppBar}
-              renderSignIn={renderSignIn}
-              renderSignUp={renderSignUp}
-              renderForgotPassword={renderForgotPassword}
-              renderResetPassword={renderResetPassword}
-            />
-          </AdminProvider>
-        }
-      />,
-    ),
-  );
-};
-
 type RouterProps = {
   children: ReactElement[];
-  AdminProvider: ComponentType<PropsWithChildren<{ home: string }>>;
   defaultRoute?: string;
   useMemoryRouter?: boolean;
   authModuleProps?: AuthModule;
@@ -97,7 +44,6 @@ type RouterProps = {
 
 const Router = ({
   children,
-  AdminProvider,
   defaultRoute,
   useMemoryRouter = false,
   authModuleProps,
@@ -117,25 +63,71 @@ const Router = ({
     };
   });
 
-  return (
-    <RouterProvider
-      router={router(
-        AdminProvider,
-        children,
-        items,
-        defaultRoute,
-        authModuleProps,
-        drawerProps,
-        navbarProps,
-        useMemoryRouter,
-        renderAppBar,
-        renderSignIn,
-        renderSignUp,
-        renderForgotPassword,
-        renderResetPassword,
-      )}
-    />
-  );
+  const home = defaultRoute ?? children[0].props.id;
+
+  const createRouter = useMemoryRouter
+    ? createMemoryRouter
+    : createBrowserRouter;
+
+  const router = createRouter([
+    { path: '/', element: <Navigate to={home} replace /> },
+    {
+      path: '/sign-in',
+      element: renderSignIn ? (
+        renderSignIn(home)
+      ) : (
+        <LoginRoute home={home} moduleProps={authModuleProps?.signIn} />
+      ),
+    },
+    {
+      path: '/sign-up',
+      element: renderSignUp ? (
+        renderSignUp(home)
+      ) : (
+        <SignUpRoute home={home} moduleProps={authModuleProps?.signUp} />
+      ),
+    },
+    {
+      path: '/forgot-password',
+      element: renderForgotPassword ? (
+        renderForgotPassword(home)
+      ) : (
+        <ForgotPasswordRoute
+          home={home}
+          moduleProps={authModuleProps?.forgotPassword}
+        />
+      ),
+    },
+    {
+      path: '/reset-password',
+      element: renderResetPassword ? (
+        renderResetPassword(home)
+      ) : (
+        <ResetPasswordRoute
+          home={home}
+          moduleProps={authModuleProps?.resetPassword}
+        />
+      ),
+    },
+    ...Children.map(children, (child) => ({
+      path: child.props.id,
+      element: (
+        <DefaultRoute
+          renderAppBar={renderAppBar}
+          isUnprotected={child.props.isUnprotected}
+          resource={child.props.id}
+          name={child.props.name}
+          module={child.props.module}
+          page={child.props.page}
+          items={items}
+          drawerProps={drawerProps}
+          navbarProps={navbarProps}
+        />
+      ),
+    })),
+  ]);
+
+  return <RouterProvider router={router} />;
 };
 
 export default Router;
